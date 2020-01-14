@@ -21,4 +21,18 @@ class TopicController extends Controller
         $result = TopicLogic::instance()->getTopicList($page,$limit,$category_id);
         return response()->json($result);
     }
+
+    public function v2(Request $request){
+        $page = $request->input('page',1);
+        $limit = $request->input('limit',20);
+        $category_id = $request->input('category_id',0);
+        $result = TopicLogic::instance()->getTopicListV2($page,$limit,$category_id);
+        return response()->json($result);
+    }
+
+    public function topicIds(Request $request){
+        $category_id = $request->input('category_id',0);
+        $result = TopicLogic::instance()->getTopicIds($category_id);
+        return response()->json($result);
+    }
 }

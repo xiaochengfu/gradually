@@ -11,21 +11,27 @@ namespace App\Logic;
 
 use App\Model\Topic;
 use App\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class TopicLogic extends BaseLogic
 {
+    /**
+     * Description:  常规列表分页查询
+     * Author: hp <xcf-hp@foxmail.com>
+     * @param int $page
+     * @param int $limit
+     * @param int $category_id
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
     public function getTopicList($page=1,$limit=20,$category_id=0){
         $model = Topic::query()
-            ->orderBy('create_time','DESC')
+            ->orderBy('id','DESC')
             ->where('delete_time',0)
             ->where(function ($query)use ($category_id){
                 if(!empty($category_id)){
                     $query->where(['category_id'=>(int)$category_id]);
                 }
             })
-//            ->from(DB::raw('`topics` FORCE INDEX (`create_time`)'))
             ->select(['id','title','excerpt','user_id','category_id','reply_count','view_count','create_time'])
             ->with('replies')
             ->with('user')
@@ -33,6 +39,66 @@ class TopicLogic extends BaseLogic
         return $model;
     }
 
+    /**
+     * Description:  不使用offset后的去总数分页查询
+     * Author: hp <xcf-hp@foxmail.com>
+     * @param int $page
+     * @param int $limit
+     * @param int $category_id
+     * @return array
+     */
+    public function getTopicListV2($page=1,$limit=20,$category_id=0){
+        $subWhere = Topic::query()
+            ->orderBy('id','DESC')
+            ->where('delete_time',0)
+            ->where(function ($query)use ($category_id){
+                if(!empty($category_id)){
+                    $query->where(['category_id'=>(int)$category_id]);
+                }
+            })
+            ->select('id')
+            ->offset($page*$limit-1)
+            ->limit(1)
+            ->value('id');
+        $model = Topic::query()
+            ->where('delete_time',0)
+            ->where(function ($query)use ($category_id){
+                if(!empty($category_id)){
+                    $query->where(['category_id'=>(int)$category_id]);
+                }
+            })
+            ->where('id','>=',$subWhere)
+            ->select(['id','title','excerpt','user_id','category_id','reply_count','view_count','create_time'])
+            ->with('replies')
+            ->with('user')
+            ->limit($limit)
+            ->get();
+        $sorted = $this->arraySort($model->toArray(),'id');
+
+        return $sorted;
+    }
+
+     /**
+     * 二维数组根据某个字段排序
+     * @param array $array 要排序的数组
+     * @param string $keys   要排序的键字段
+     * @param int $sort  排序类型  SORT_ASC     SORT_DESC
+     * @return array 排序后的数组
+     */
+    protected function arraySort($array, $keys, $sort = SORT_DESC) {
+        $keysValue = [];
+        foreach ($array as $k => $v) {
+            $keysValue[$k] = $v[$keys];
+        }
+        array_multisort($keysValue, $sort, $array);
+        return $array;
+    }
+
+
+    /**
+     * Description:  生成测试数据
+     * Author: hp <xcf-hp@foxmail.com>
+     */
     public function generateTestTopic(){
         //生成用户
         ini_set ('memory_limit', '1024M');
