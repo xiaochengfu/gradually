@@ -91,12 +91,16 @@ class TopicLogic extends BaseLogic
     public function getTopicListV3($page=1,$limit=20,$category_id=0){
         //使用缓存，缓存热数据n条，假设200条
         $ids = TopicHotCache::instance()->getTopicIdsPage($page,$limit);
-        $list = [];
+        $keyList = [];
         foreach ($ids as $id){
-            $detail = Redis::get('topic_hot_detail:'.$id);
-            $list[] = json_decode($detail);
+            $keyList[] =  'topic_hot_detail:'.$id;
         }
-        return $list;
+        $detailList = Redis::mget($keyList);
+        foreach ($detailList as &$v){
+            $v = json_decode($v);
+        }
+
+        return $detailList;
     }
 
      /**
