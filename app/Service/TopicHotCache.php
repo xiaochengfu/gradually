@@ -19,8 +19,8 @@ class TopicHotCache extends BaseLogic
     }
 
     public function TopicIdsCache($ids){
-        foreach ($ids as $v){
-            Redis::zadd('topic_hot_ids',$v,$v);
+        foreach ($ids as $sort=>$v){
+            Redis::zadd('topic_hot_ids',$sort,$v);
         }
     }
 
