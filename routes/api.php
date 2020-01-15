@@ -18,4 +18,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 Route::get('/topic','TopicController@index');
 Route::get('/topic/v2','TopicController@v2');
+Route::get('/topic/v3','TopicController@v3');
 Route::get('/topicIds','TopicController@topicIds');

@@ -10,7 +10,9 @@ namespace App\Logic;
 
 
 use App\Model\Topic;
+use App\Service\TopicHotCache;
 use App\User;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
 class TopicLogic extends BaseLogic
@@ -76,6 +78,25 @@ class TopicLogic extends BaseLogic
         $sorted = $this->arraySort($model->toArray(),'id');
 
         return $sorted;
+    }
+
+    /**
+     * Description:  缓存热数据，使用redis缓存
+     * Author: hp <xcf-hp@foxmail.com>
+     * @param int $page
+     * @param int $limit
+     * @param int $category_id
+     * @return array
+     */
+    public function getTopicListV3($page=1,$limit=20,$category_id=0){
+        //使用缓存，缓存热数据n条，假设200条
+        $ids = TopicHotCache::instance()->getTopicIdsPage($page,$limit);
+        $list = [];
+        foreach ($ids as $id){
+            $detail = Redis::get('topic_hot_detail:'.$id);
+            $list[] = json_decode($detail);
+        }
+        return $list;
     }
 
      /**
